@@ -68,7 +68,7 @@ public class GetUserProfileHandler implements RequestHandler<APIGatewayProxyRequ
 
     private Users mapToUser(Map<String, AttributeValue> item) {
         Users user = new Users();
-        user.setUser_id(item.get("user_id").s());
+        user.setUser_id(null);
         user.setEmail_addr(item.get("email_addr").s());
         user.setUsername(item.get("username").s());
         user.setCreated_ts(Long.parseLong(item.get("created_ts").n()));

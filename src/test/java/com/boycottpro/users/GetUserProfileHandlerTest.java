@@ -68,7 +68,7 @@ public class GetUserProfileHandlerTest {
         // Assert
         assertEquals(200, response.getStatusCode());
         Users returnedUser = objectMapper.readValue(response.getBody(), Users.class);
-        assertEquals(userId, returnedUser.getUser_id());
+        assertEquals(null, returnedUser.getUser_id());
         assertEquals("testuser", returnedUser.getUsername());
         assertEquals("test@example.com", returnedUser.getEmail_addr());
     }
