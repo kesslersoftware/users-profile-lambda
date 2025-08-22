@@ -6,6 +6,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
 import com.boycottpro.models.Users;
+import com.boycottpro.utilities.JwtUtility;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -34,14 +35,9 @@ public class GetUserProfileHandler implements RequestHandler<APIGatewayProxyRequ
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
         try {
-            Map<String, String> pathParams = event.getPathParameters();
-            String userId = (pathParams != null) ? pathParams.get("user_id") : null;
-            if (userId == null || userId.isEmpty()) {
-                return new APIGatewayProxyResponseEvent()
-                        .withStatusCode(400)
-                        .withBody("{\"error\":\"Missing user_id in path\"}");
-            }
-            Map<String, AttributeValue> key = Map.of("user_id", AttributeValue.builder().s(userId).build());
+            String sub = JwtUtility.getSubFromRestEvent(event);
+            if (sub == null) return response(401, "Unauthorized");
+            Map<String, AttributeValue> key = Map.of("user_id", AttributeValue.builder().s(sub).build());
             GetItemRequest request = GetItemRequest.builder()
                     .tableName(TABLE_NAME)
                     .key(key)
@@ -77,6 +73,7 @@ public class GetUserProfileHandler implements RequestHandler<APIGatewayProxyRequ
         user.setUsername(item.get("username").s());
         user.setCreated_ts(Long.parseLong(item.get("created_ts").n()));
         user.setPassword_hash("***");
+        user.setPaying_user(item.get("paying_user").bool());
         return user;
     }
 }

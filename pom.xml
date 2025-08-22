@@ -21,7 +21,7 @@
     <dependency>
       <groupId>com.boycottpro</groupId>
       <artifactId>boycottpro-common-models</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.12</version>
     </dependency>
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
@@ -69,11 +69,6 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.13.1</version>
-    </dependency>
-    <dependency>
-      <groupId>com.boycottpro</groupId>
-      <artifactId>boycottpro-common-models</artifactId>
-      <version>1.0.0</version>
     </dependency>
   </dependencies>
   <repositories>

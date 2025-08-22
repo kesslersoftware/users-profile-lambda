@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,13 +44,23 @@ public class GetUserProfileHandlerTest {
                 "user_id", AttributeValue.builder().s(userId).build(),
                 "email_addr", AttributeValue.builder().s("test@example.com").build(),
                 "username", AttributeValue.builder().s("testuser").build(),
-                "created_ts", AttributeValue.builder().n(Long.toString(createdTs)).build()
+                "created_ts", AttributeValue.builder().n(Long.toString(createdTs)).build(),
+                "paying_user", AttributeValue.builder().bool(true).build()
         );
         GetItemResponse mockResponse = GetItemResponse.builder().item(item).build();
         when(dynamoDbMock.getItem(any(GetItemRequest.class))).thenReturn(mockResponse);
 
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent()
-                .withPathParameters(Map.of("user_id", userId));
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        Map<String, String> claims = Map.of("sub", "11111111-2222-3333-4444-555555555555");
+        Map<String, Object> authorizer = new HashMap<>();
+        authorizer.put("claims", claims);
+
+        APIGatewayProxyRequestEvent.ProxyRequestContext rc = new APIGatewayProxyRequestEvent.ProxyRequestContext();
+        rc.setAuthorizer(authorizer);
+        event.setRequestContext(rc);
+
+        // Path param "s" since client calls /users/s
+        event.setPathParameters(Map.of("user_id", "s"));
 
         // Act
         var response = getUserProfileHandler.handleRequest(event, mock(Context.class));
@@ -67,8 +78,17 @@ public class GetUserProfileHandlerTest {
         when(dynamoDbMock.getItem(any(GetItemRequest.class)))
                 .thenReturn(GetItemResponse.builder().build());
 
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent()
-                .withPathParameters(Map.of("user_id", "missing_user"));
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        Map<String, String> claims = Map.of("sub", "11111111-2222-3333-4444-555555555555");
+        Map<String, Object> authorizer = new HashMap<>();
+        authorizer.put("claims", claims);
+
+        APIGatewayProxyRequestEvent.ProxyRequestContext rc = new APIGatewayProxyRequestEvent.ProxyRequestContext();
+        rc.setAuthorizer(authorizer);
+        event.setRequestContext(rc);
+
+        // Path param "s" since client calls /users/s
+        event.setPathParameters(Map.of("user_id", "s"));
 
         var response = getUserProfileHandler.handleRequest(event, mock(Context.class));
 
@@ -78,13 +98,12 @@ public class GetUserProfileHandlerTest {
 
     @Test
     void testMissingUserIdPathParam() {
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent()
-                .withPathParameters(null);
+        APIGatewayProxyRequestEvent event = null;
 
         var response = getUserProfileHandler.handleRequest(event, mock(Context.class));
 
-        assertEquals(400, response.getStatusCode());
-        assertTrue(response.getBody().contains("Missing user_id"));
+        assertEquals(401, response.getStatusCode());
+        assertTrue(response.getBody().contains("Unauthorized"));
     }
 
     @Test
@@ -92,8 +111,17 @@ public class GetUserProfileHandlerTest {
         when(dynamoDbMock.getItem(any(GetItemRequest.class)))
                 .thenThrow(new RuntimeException("Boom"));
 
-        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent()
-                .withPathParameters(Map.of("user_id", "abc"));
+        APIGatewayProxyRequestEvent event = new APIGatewayProxyRequestEvent();
+        Map<String, String> claims = Map.of("sub", "11111111-2222-3333-4444-555555555555");
+        Map<String, Object> authorizer = new HashMap<>();
+        authorizer.put("claims", claims);
+
+        APIGatewayProxyRequestEvent.ProxyRequestContext rc = new APIGatewayProxyRequestEvent.ProxyRequestContext();
+        rc.setAuthorizer(authorizer);
+        event.setRequestContext(rc);
+
+        // Path param "s" since client calls /users/s
+        event.setPathParameters(Map.of("user_id", "s"));
 
         var response = getUserProfileHandler.handleRequest(event, mock(Context.class));
 
