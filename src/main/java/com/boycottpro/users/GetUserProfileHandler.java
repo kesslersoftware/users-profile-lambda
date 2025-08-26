@@ -48,14 +48,9 @@ public class GetUserProfileHandler implements RequestHandler<APIGatewayProxyRequ
             }
             Users user = mapToUser(result.item());
             String responseBody = objectMapper.writeValueAsString(user);
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(200)
-                    .withHeaders(Map.of("Content-Type", "application/json"))
-                    .withBody(responseBody);
+            return response(200,responseBody);
         } catch (Exception e) {
-            return new APIGatewayProxyResponseEvent()
-                    .withStatusCode(500)
-                    .withBody("{\"error\": \"Unexpected server error: " + e.getMessage() + "\"}");
+            return response(500,"error : Unexpected server error: " + e.getMessage());
         }
     }
 

@@ -4,7 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.boycottpro.models.Users;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -31,7 +30,7 @@ public class GetUserProfileHandlerTest {
     private DynamoDbClient dynamoDbMock;
 
     @InjectMocks
-    private GetUserProfileHandler getUserProfileHandler;
+    private GetUserProfileHandler handler;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -63,7 +62,7 @@ public class GetUserProfileHandlerTest {
         event.setPathParameters(Map.of("user_id", "s"));
 
         // Act
-        var response = getUserProfileHandler.handleRequest(event, mock(Context.class));
+        var response = handler.handleRequest(event, mock(Context.class));
 
         // Assert
         assertEquals(200, response.getStatusCode());
@@ -90,7 +89,7 @@ public class GetUserProfileHandlerTest {
         // Path param "s" since client calls /users/s
         event.setPathParameters(Map.of("user_id", "s"));
 
-        var response = getUserProfileHandler.handleRequest(event, mock(Context.class));
+        var response = handler.handleRequest(event, mock(Context.class));
 
         assertEquals(404, response.getStatusCode());
         assertTrue(response.getBody().contains("User not found"));
@@ -100,7 +99,7 @@ public class GetUserProfileHandlerTest {
     void testMissingUserIdPathParam() {
         APIGatewayProxyRequestEvent event = null;
 
-        var response = getUserProfileHandler.handleRequest(event, mock(Context.class));
+        var response = handler.handleRequest(event, mock(Context.class));
 
         assertEquals(401, response.getStatusCode());
         assertTrue(response.getBody().contains("Unauthorized"));
@@ -123,7 +122,7 @@ public class GetUserProfileHandlerTest {
         // Path param "s" since client calls /users/s
         event.setPathParameters(Map.of("user_id", "s"));
 
-        var response = getUserProfileHandler.handleRequest(event, mock(Context.class));
+        var response = handler.handleRequest(event, mock(Context.class));
 
         assertEquals(500, response.getStatusCode());
         assertTrue(response.getBody().contains("Unexpected server error"));
