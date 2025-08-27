@@ -34,9 +34,10 @@ public class GetUserProfileHandler implements RequestHandler<APIGatewayProxyRequ
 
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
+        String sub = null;
         try {
-            String sub = JwtUtility.getSubFromRestEvent(event);
-            if (sub == null) return response(401, "Unauthorized");
+            sub = JwtUtility.getSubFromRestEvent(event);
+            if (sub == null) return response(401, Map.of("message", "Unauthorized"));
             Map<String, AttributeValue> key = Map.of("user_id", AttributeValue.builder().s(sub).build());
             GetItemRequest request = GetItemRequest.builder()
                     .tableName(TABLE_NAME)
@@ -44,21 +45,27 @@ public class GetUserProfileHandler implements RequestHandler<APIGatewayProxyRequ
                     .build();
             var result = dynamoDb.getItem(request);
             if (!result.hasItem()) {
-                return response(404, "{\"error\":\"User not found\"}");
+                return response(404, Map.of("error", "User not found"));
             }
             Users user = mapToUser(result.item());
-            String responseBody = objectMapper.writeValueAsString(user);
-            return response(200,responseBody);
+            return response(200,user);
         } catch (Exception e) {
-            return response(500,"error : Unexpected server error: " + e.getMessage());
+            System.out.println(e.getMessage() + " for user " + sub);
+            return response(500,Map.of("error", "Unexpected server error: " + e.getMessage()));
         }
     }
 
-    private APIGatewayProxyResponseEvent response(int status, String body) {
+    private APIGatewayProxyResponseEvent response(int status, Object body) {
+        String responseBody = null;
+        try {
+            responseBody = objectMapper.writeValueAsString(body);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         return new APIGatewayProxyResponseEvent()
                 .withStatusCode(status)
                 .withHeaders(Map.of("Content-Type", "application/json"))
-                .withBody(body);
+                .withBody(responseBody);
     }
 
     private Users mapToUser(Map<String, AttributeValue> item) {
