@@ -7,6 +7,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 
 import com.boycottpro.models.Users;
 import com.boycottpro.utilities.JwtUtility;
+import com.boycottpro.utilities.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -35,9 +36,14 @@ public class GetUserProfileHandler implements RequestHandler<APIGatewayProxyRequ
     @Override
     public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
         String sub = null;
+        int lineNum = 39;
         try {
             sub = JwtUtility.getSubFromRestEvent(event);
-            if (sub == null) return response(401, Map.of("message", "Unauthorized"));
+            if (sub == null) {
+            Logger.error(42, sub, "user is Unauthorized");
+            return response(401, Map.of("message", "Unauthorized"));
+        }
+        lineNum = 45;
             Map<String, AttributeValue> key = Map.of("user_id", AttributeValue.builder().s(sub).build());
             GetItemRequest request = GetItemRequest.builder()
                     .tableName(TABLE_NAME)
@@ -50,7 +56,7 @@ public class GetUserProfileHandler implements RequestHandler<APIGatewayProxyRequ
             Users user = mapToUser(result.item());
             return response(200,user);
         } catch (Exception e) {
-            System.out.println(e.getMessage() + " for user " + sub);
+            Logger.error(lineNum, sub, e.getMessage());
             return response(500,Map.of("error", "Unexpected server error: " + e.getMessage()));
         }
     }
